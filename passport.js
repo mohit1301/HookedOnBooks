@@ -1,32 +1,60 @@
-const JwtStrategy = require('passport-jwt').Strategy
-const User = require('./models/user')
-const passport = require('passport')
-require('dotenv').config()
+const JwtStrategy = require('passport-jwt').Strategy;
+const User = require('./auth-service/models/userModel');
+const passport = require('passport');
+require('dotenv').config();
 
 const cookieExtractor = function (req) {
-    let jwtToken = null;
-    if (req && req.cookies) {
-        jwtToken = req.cookies.accessToken;
+    let accessToken = null;
+    // Check if the token is present in the authorization header
+    if (req.headers && req.headers.authorization) {
+        const parts = req.headers.authorization.split(' ');
+        if (parts.length === 2 && parts[0] === 'Bearer') {
+            accessToken = parts[1];
+        }
     }
-    return jwtToken;
+    // If token is not found in the authorization header, check the cookies
+    if (!accessToken && req.cookies && req.cookies.accessToken) {
+        accessToken = req.cookies.accessToken;
+    }
+    console.log('passport access token = ', accessToken)
+    return accessToken;
 };
 
 const opts = {
-
     jwtFromRequest: cookieExtractor,
-    secretOrKey: process.env.JWT_SECRET_KEY
-}
+    secretOrKey: process.env.JWT_SECRET_KEY,
+    ignoreExpiration: true,
+    passReqToCallback: true
+};
 
-passport.use(new JwtStrategy(opts, function (jwt_payload, done) {
+// Use the JwtStrategy in passport
+passport.use(new JwtStrategy(opts, function (req, jwt_payload, done) {
+    const refreshToken = req.cookies.refreshToken;
+
+    // Check if the token has expired
+    if (Date.now() >= jwt_payload.exp * 1000) {
+        console.log('Token has expired');
+        // Pass the refresh token & error message to the next middleware
+        req.refreshToken = refreshToken;
+        req.errorMessage = 'TokenExpired';
+        return done(null, true);
+    }
+
+    // return done(null, false)
     User.findOne({ _id: jwt_payload.userId }, function (err, user) {
         if (err) {
+            console.log('Error finding user:', err);
             return done(err, false);
         }
         if (user) {
-            user.isAuthenticated = true
+            console.log('User found');
+            user.isAuthenticated = true;
             return done(null, user);
         } else {
+            console.log('User not found');
             return done(null, false);
         }
     });
-}));
+}))
+
+module.exports = passport

@@ -84,3 +84,14 @@ body {
 .centered-nav .header-title {
   margin: 0 auto;
 }
+
+.image-container {
+  position: relative;
+  text-align: center; /* Center the label */
+}
+
+.title-label {
+  display: block; /* Display the label as a block element */
+  margin-top: 5px; /* Adjust as needed */
+}
+

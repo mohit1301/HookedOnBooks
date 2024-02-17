@@ -1,13 +1,13 @@
 <header>
   <nav class="header-nav">
-    <a class="header-title" href="/home">HookedOnBooks</a>
+    <a class="header-title" href="http://localhost:3000/books/recentlyAdded">HookedOnBooks</a>
     <ul>
-      <li><a href="/authors">Authors</a></li>
-      <li><a href="/authors/new">Add Author</a></li>
-      <li><a href="/books">Books</a></li>
-      <li><a href="/books/new">Add Book</a></li>
-      <% if (isAuthenticated) { %>
-        <li><a href="/logout">Logout</a></li>
+      <li><a href="http://localhost:3001/authors">Authors</a></li>
+      <li><a href="http://localhost:3001/authors/new">Add Author</a></li>
+      <li><a href="http://localhost:3000/books">Books</a></li>
+      <li><a href="http://localhost:3000/books/new">Add Book</a></li>
+      <% if (locals.isAuthenticated) { %>
+        <li><a href="http://localhost:3002/auth/logout">Logout</a></li>
         <% } %>
     </ul>
   </nav>
