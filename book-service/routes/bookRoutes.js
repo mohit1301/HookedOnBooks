@@ -23,12 +23,12 @@ router.get('/new', async (req, res) => {
 
 //
 router.get('/recentlyAdded', async (req, res) => {
-  console.log('inside recently added, user = ', req.user)
+  // console.log('inside recently added, user = ', req.user)
   try {
     const books = await Book.find().sort({ createdAt: 'desc' }).limit(10).exec()
-    res.render('index', { books: books })
+    res.render('index', { books: books, booksBaseUrl: `${process.env.BOOKS_BASEURL}` })
   } catch (error) {
-    res.render('books/index', { errorMessage: 'An error occurred' })
+    res.render('books/index', { errorMessage: 'An error occurred', booksBaseUrl: `${process.env.BOOKS_BASEURL}` })
   }
 })
 
@@ -37,7 +37,7 @@ router.get('/:id', async (req, res) => {
   try {
     const accessToken = req.cookies.accessToken
     const book = await Book.findById(req.params.id)
-    const authorResponse = await axios.get(`http://localhost:3001/authors/getById?id=${book.author}`,
+    const authorResponse = await axios.get(`${process.env.AUTHOR_BASEURL}/authors/getById?id=${book.author}`,
       {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -47,10 +47,14 @@ router.get('/:id', async (req, res) => {
       book: book,
       authorDetails: authorResponse.data
     };
-    res.render('books/show', { bookWithAuthor: bookWithAuthor })
+    res.render('books/show', { 
+      bookWithAuthor: bookWithAuthor, 
+      booksBaseUrl: `${process.env.BOOKS_BASEURL}`,
+      authorBaseUrl: `${process.env.AUTHOR_BASEURL}` 
+    })
   } catch (error) {
     console.log('error fetching a book ---', error.message)
-    res.redirect('/books', {errorMessage: error.message})
+    res.redirect('/books')
   }
 })
 
@@ -81,7 +85,8 @@ router.get('/', async (req, res) => {
     const books = await query.exec()
     res.render('books/index', {
       books: books,
-      searchOptions: req.query
+      searchOptions: req.query,
+      booksBaseUrl: `${process.env.BOOKS_BASEURL}`
     })
   } catch {
     res.redirect('/books')
@@ -141,7 +146,7 @@ router.delete('/:id', async (req, res) => {
   const accessToken = req.cookies.accessToken
   try {
     book = await Book.findByIdAndDelete(req.params.id)
-    const authorResponse = await axios.get(`http://localhost:3001/authors/getById?id=${book.author}`, {
+    const authorResponse = await axios.get(`${process.env.AUTHOR_BASEURL}/authors/getById?id=${book.author}`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
       }
@@ -155,7 +160,8 @@ router.delete('/:id', async (req, res) => {
     if (book == null) {
       res.render('books/show', {
         bookWithAuthor: bookWithAuthor,
-        errorMessage: 'Could not remove book'
+        errorMessage: 'Could not remove book',
+        booksBaseUrl: `${process.env.BOOKS_BASEURL}`
       })
     } else {
       res.redirect('/books')
@@ -174,14 +180,15 @@ async function renderEditPage(accessToken, res, book, hasError = false) {
 
 async function renderFormPage(accessToken,res, book, form, hasError = false) {
   try {
-    const authors = await axios.get('http://localhost:3001/authors/getAllAuthors', {
+    const authors = await axios.get(`${process.env.AUTHOR_BASEURL}/authors/getAllAuthors`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
       }
     });
     const params = {
       authors: authors.data,
-      book: book
+      book: book,
+      booksBaseUrl: `${process.env.BOOKS_BASEURL}`
     }
     if (hasError) {
       if (form === 'edit') {

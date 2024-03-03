@@ -4,7 +4,6 @@ const router = express.Router()
 const { hashSync, compareSync } = require('bcrypt')
 const jwt = require('jsonwebtoken')
 require('dotenv').config()
-const passport = require('../../passport')
 
 router.get('/', (req, res) => {
     res.render('dashboard')
@@ -42,7 +41,7 @@ router.post('/register', async (req, res) => {
 
 router.get('/login', (req, res) => {
     if (req.cookies.accessToken) {
-        return res.redirect('http://localhost:3000/books/recentlyAdded');
+        return res.redirect(`${process.env.BOOKS_BASEURL}/books/recentlyAdded`);
     }
     res.render('login')
 })
@@ -78,7 +77,7 @@ router.post('/login', async (req, res) => {
 
     res.cookie('accessToken', accessToken, { httpOnly: true, secure: true, })
     res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, })
-    res.redirect('http://localhost:3000/books/recentlyAdded')
+    res.redirect(`${process.env.BOOKS_BASEURL}/books/recentlyAdded`)
 })
 
 router.get('/newAccessToken', async (req, res) => {
@@ -91,7 +90,7 @@ router.get('/newAccessToken', async (req, res) => {
         }
     }
 
-    if (!refreshToken) {
+    if (!refreshToken || refreshToken == null) {
         res.redirect('/auth/login')
     }
 
@@ -114,14 +113,7 @@ router.get('/newAccessToken', async (req, res) => {
     }
 });
 
-router.get('/logout', passport.authenticate('jwt', { session: false }), async (req, res) => {
-    try {
-        const user = req.user
-        user.refreshToken = null
-        await user.save()
-    } catch (error) {
-        res.redirect('http://localhost:3000/books/recentlyAdded', { errorMessage: 'An error occurred while logging out' })
-    }
+router.get('/logout',  async (req, res) => {
     res.clearCookie('accessToken');
     res.clearCookie('refreshToken');
     res.redirect('/auth');
@@ -130,7 +122,7 @@ router.get('/logout', passport.authenticate('jwt', { session: false }), async (r
 
 // Function to generate access token
 const generateAccessToken = (userId) => {
-    return jwt.sign({ userId }, process.env.JWT_SECRET_KEY, { expiresIn: '1m' });
+    return jwt.sign({ userId }, process.env.JWT_SECRET_KEY, { expiresIn: '5m' });
 };
 
 // Function to generate refresh token

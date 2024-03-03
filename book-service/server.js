@@ -6,10 +6,10 @@ const methodOverride = require('method-override')
 const cookieParser = require('cookie-parser')
 const PORT = process.env.BOOK_PORT || 3000
 require('./dbConfig/config')
-const getNewAccessToken = require('../middleware/getNewAccessToken')
+const getNewAccessToken = require('./middleware/getNewAccessToken')
 
-const passport = require('../passport')
-app.use(passport.initialize())
+// const passport = require('./passport')
+// app.use(passport.initialize())
 
 app.use(cookieParser())
 app.use(expressLayouts)
@@ -21,10 +21,25 @@ app.use(express.static(process.cwd() + '/public'))
 app.use(express.urlencoded({ limit: '10mb', extended: false }))
 
 const bookRouter = require('./routes/bookRoutes')
+const authenticate = require('./middleware/authMiddleware')
 
-app.use(passport.authenticate('jwt', { session: false }));
+// app.use(passport.authenticate('jwt', { session: false }));
+app.use(authenticate)
 
-app.use(getNewAccessToken)
+app.use((req, res, next) => {
+    if (req.errorMessage === 'JsonWebTokenError') {
+        console.log('Jsonwebtoken error occurred. Redirecting to login')
+        res.redirect(`${process.env.AUTH_BASEURL}/auth/login`)
+    }
+    else if (req.errorMessage === 'TokenExpired') {
+        // Apply getNewAccessToken middleware only when req.errorMessage is present
+        getNewAccessToken(req, res, next);
+    } 
+    else {
+        // Skip getNewAccessToken middleware
+        next();
+    }
+});
 
 app.use('/books', bookRouter)
 

@@ -1,5 +1,5 @@
 const mongoose = require('mongoose')
-const Book = require('../../book-service/models/bookModel')
+const Book = require('../../routes')
 
 const authorSchema = new mongoose.Schema({
   name: {

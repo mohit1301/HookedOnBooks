@@ -15,7 +15,7 @@ router.get('/getAllAuthors', async (req, res) => {
 
 // New Author Route
 router.get('/new', (req, res) => {
-  res.render('authors/new', { author: new Author() })
+  res.render('authors/new', { author: new Author(), authorBaseUrl: `${process.env.AUTHOR_BASEURL}` })
 })
 
 //Get author details by Book Id
@@ -35,15 +35,16 @@ router.get('/:id', async (req, res) => {
   const accessToken = req.cookies.accessToken
   try {
     const author = await Author.findById(req.params.id)
-    const books = await axios.get(`http://localhost:3000/books/getByAuthorId?id=${author.id}`, {
+    const books = await axios.get(`${process.env.BOOKS_BASEURL}/books/getByAuthorId?id=${author.id}`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
       }
     });
-
     res.render('authors/show', {
       author: author,
       booksByAuthor: books,
+      authorBaseUrl: `${process.env.AUTHOR_BASEURL}`,
+      booksBaseUrl: `${process.env.BOOKS_BASEURL}`,
       errorMessage
     })
   } catch (error) {
@@ -55,7 +56,7 @@ router.get('/:id', async (req, res) => {
 router.get('/:id/edit', async (req, res) => {
   try {
     const author = await Author.findById(req.params.id)
-    res.render('authors/edit', { author: author })
+    res.render('authors/edit', { author: author, authorBaseUrl: `${process.env.AUTHOR_BASEURL}` })
   } catch {
     res.redirect('/authors')
   }
@@ -71,7 +72,8 @@ router.get('/', async (req, res) => {
     const authors = await Author.find(searchOptions)
     res.render('authors/index', {
       authors: authors,
-      searchOptions: req.query
+      searchOptions: req.query,
+      authorBaseUrl: `${process.env.AUTHOR_BASEURL}`
     })
   } catch {
     res.redirect('/authors')
@@ -89,7 +91,8 @@ router.post('/', async (req, res) => {
   } catch {
     res.render('authors/new', {
       author: author,
-      errorMessage: 'Error creating an Author'
+      errorMessage: 'Error creating an Author',
+      authorBaseUrl: `${process.env.AUTHOR_BASEURL}`
     })
   }
 })
@@ -107,7 +110,8 @@ router.put('/:id', async (req, res) => {
     } else {
       res.render('authors/edit', {
         author: author,
-        errorMessage: 'Error updating Author'
+        errorMessage: 'Error updating Author',
+        authorBaseUrl: `${process.env.AUTHOR_BASEURL}`
       })
     }
   }
@@ -122,7 +126,7 @@ router.delete('/:id', async (req, res) => {
     }
 
     // Check if there are any books associated with the author
-    const books = await axios.get(`http://localhost:3000/books/getByAuthorId?id=${author.id}`, {
+    const books = await axios.get(`${process.env.BOOKS_BASEURL}/books/getByAuthorId?id=${author.id}`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
       }
